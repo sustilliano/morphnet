@@ -2,7 +2,7 @@
 
 use super::{
     MMXError, MMXHeader, ChunkDirectory, ChunkEntry, ChunkType, CompressionType,
-    TensorData, SequenceData, TextData, MeshData, EmbeddingData, MetaData,
+    TensorData, SequenceData, TextData, MeshData, EmbeddingData, MetaData, GeometricTemplateData,
     format::*
 };
 use std::fs::{File, OpenOptions};
@@ -119,8 +119,20 @@ impl MMXFile {
             embedding.method,
             embedding.labels
         )).map_err(|e| MMXError::DataIntegrity(e.to_string()))?;
-        
+
         self.write_chunk(path, ChunkType::Embedding, data, CompressionType::Lz4)
+    }
+
+    /// Write geometric template chunk
+    pub fn write_geometric_template(&mut self, path: &str, template: GeometricTemplateData) -> Result<(), MMXError> {
+        let data = template.to_bytes();
+        self.write_chunk(path, ChunkType::GeometricTemplate, data, CompressionType::Lz4)
+    }
+
+    /// Read geometric template chunk
+    pub fn read_geometric_template(&mut self, path: &str) -> Result<GeometricTemplateData, MMXError> {
+        let data = self.read_chunk(path)?;
+        GeometricTemplateData::from_bytes(&data).map_err(|e| MMXError::DataIntegrity(e.to_string()))
     }
     
     /// Create a group (directory structure)

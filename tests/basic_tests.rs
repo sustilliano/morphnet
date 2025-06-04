@@ -1,5 +1,6 @@
 use morphnet_gtl::prelude::*;
 use morphnet_gtl::mmx::{MMXBuilder, TensorData, MeshData, CompressionType};
+use morphnet_gtl::mmx::{GeometricParameters, GeometricTemplateData, ExtendedBodyPlan};
 use morphnet_gtl::morphnet::TemplateFactory;
 use tempfile::tempdir;
 use ndarray::{Array3, ArrayD, IxDyn};
@@ -177,6 +178,50 @@ fn test_mmx_chunk_directory() {
 
     let chunk_info = mmx_file.get_chunk_info("/test");
     assert!(chunk_info.is_some());
+}
+
+#[test]
+fn test_geometric_template_roundtrip() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("geo.mmx");
+
+    let mut mmx_file = MMXBuilder::new("creator".to_string())
+        .create(&path)
+        .expect("Failed to create MMX file");
+
+    let params = GeometricParameters {
+        body_length: 1.0,
+        body_width: 0.5,
+        body_height: 0.4,
+        leg_length: 0.3,
+        leg_thickness: 0.1,
+        num_legs: 4,
+        head_length: 0.2,
+        head_width: 0.2,
+        neck_length: 0.15,
+        tail_length: 0.25,
+        wing_span: 0.0,
+        stride_length: 0.7,
+        turning_radius: 1.0,
+        jump_height: 0.5,
+        max_speed: 5.0,
+    };
+
+    let template = GeometricTemplateData {
+        parameters: params.clone(),
+        body_plan: ExtendedBodyPlan::QuadrupedMedium,
+    };
+
+    mmx_file
+        .write_geometric_template("/geo", template.clone())
+        .expect("write geo template");
+
+    let read = mmx_file
+        .read_geometric_template("/geo")
+        .expect("read geo template");
+
+    assert_eq!(read.body_plan, template.body_plan);
+    assert!((read.parameters.body_length - params.body_length).abs() < 1e-6);
 }
 
 #[cfg(test)]

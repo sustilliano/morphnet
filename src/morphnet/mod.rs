@@ -1,12 +1,10 @@
 //! MorphNet: Geometric Template Learning for Structural Understanding
 
 pub mod model;
-pub mod templates;
 pub mod classification;
 pub mod training;
 
 pub use model::*;
-pub use templates::*;
 pub use classification::*;
 pub use training::*;
 

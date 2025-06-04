@@ -11,7 +11,10 @@ pub mod analysis;
 pub mod spatial;
 
 // Re-export main types for convenience
-pub use mmx::{MMXFile, MMXError, ChunkType, TensorData, MMXBuilder, MMXMode};
+pub use mmx::{
+    MMXFile, MMXError, ChunkType, TensorData, MMXBuilder, MMXMode,
+    GeometricParameters, GeometricTemplateData, ExtendedBodyPlan,
+};
 pub use morphnet::{
     MorphNet, MorphNetBuilder, GeometricTemplate, BodyPlan, TemplateFactory,
     ClassificationResult, Keypoint, Connection, MorphNetConfig
@@ -54,7 +57,8 @@ pub mod prelude {
         MMXFile, MMXBuilder, MMXMode,
         MorphNet, MorphNetBuilder, PatchQuilt, MorphNetAnalyzer,
         SpatialAwareness, Result, MorphNetError, BodyPlan,
-        GeometricTemplate, TemplateFactory, SpatialConfig
+        GeometricTemplate, TemplateFactory, SpatialConfig,
+        GeometricParameters, GeometricTemplateData, ExtendedBodyPlan,
     };
     pub use ndarray::{Array, Array1, Array2, Array3, ArrayD};
     pub use nalgebra::{Point3, Vector3, Matrix3, Matrix4};

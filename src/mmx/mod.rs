@@ -6,10 +6,12 @@
 pub mod format;
 pub mod chunks;
 pub mod api;
+pub mod geometric;
 
 pub use format::*;
 pub use chunks::*;
 pub use api::*;
+pub use geometric::*;
 
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
@@ -51,6 +53,7 @@ pub enum ChunkType {
     Mesh = 0x04,
     Embedding = 0x05,
     Meta = 0x06,
+    GeometricTemplate = 0x07,
 }
 
 impl TryFrom<u8> for ChunkType {
@@ -64,6 +67,7 @@ impl TryFrom<u8> for ChunkType {
             0x04 => Ok(ChunkType::Mesh),
             0x05 => Ok(ChunkType::Embedding),
             0x06 => Ok(ChunkType::Meta),
+            0x07 => Ok(ChunkType::GeometricTemplate),
             _ => Err(MMXError::InvalidChunkType(value)),
         }
     }
