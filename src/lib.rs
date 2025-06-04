@@ -10,17 +10,24 @@ pub mod patch_quilt;
 pub mod analysis;
 pub mod spatial;
 
-pub use mmx::{MMXFile, MMXError, ChunkType, TensorData};
-pub use morphnet::{MorphNet, BodyPlan, GeometricTemplate, ClassificationResult};
-pub use patch_quilt::{PatchQuilt, Patch, MeshRefinement};
+// Re-export main types for convenience
+pub use mmx::{MMXFile, MMXError, ChunkType, TensorData, MMXBuilder, MMXMode};
+pub use morphnet::{
+    MorphNet, MorphNetBuilder, GeometricTemplate, BodyPlan, TemplateFactory,
+    ClassificationResult, Keypoint, Connection, MorphNetConfig
+};
+pub use patch_quilt::{PatchQuilt, Patch, RefinementConfig};
 pub use analysis::{MorphNetAnalyzer, EmbeddingMethod, PhylogeneticTree};
-pub use spatial::{SpatialAwareness, AccountabilityPredictor, StructuralMonitor};
+pub use spatial::{SpatialAwareness, SpatialConfig, SpatialEvent};
 
 /// Core error types for the framework
 #[derive(thiserror::Error, Debug)]
 pub enum MorphNetError {
     #[error("MMX format error: {0}")]
     MMX(#[from] MMXError),
+
+    #[error("MorphNet error: {0}")]
+    MorphNet(#[from] morphnet::MorphNetError),
     
     #[error("Model error: {0}")]
     Model(String),
@@ -44,8 +51,10 @@ pub const MAGIC_BYTES: &[u8; 4] = b"MMX\x00";
 /// Re-export commonly used types
 pub mod prelude {
     pub use crate::{
-        MMXFile, MorphNet, PatchQuilt, MorphNetAnalyzer, SpatialAwareness,
-        Result, MorphNetError, BodyPlan, GeometricTemplate
+        MMXFile, MMXBuilder, MMXMode,
+        MorphNet, MorphNetBuilder, PatchQuilt, MorphNetAnalyzer,
+        SpatialAwareness, Result, MorphNetError, BodyPlan,
+        GeometricTemplate, TemplateFactory, SpatialConfig
     };
     pub use ndarray::{Array, Array1, Array2, Array3, ArrayD};
     pub use nalgebra::{Point3, Vector3, Matrix3, Matrix4};

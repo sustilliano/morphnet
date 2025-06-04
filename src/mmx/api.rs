@@ -31,6 +31,7 @@ impl MMXFile {
     pub fn create<P: AsRef<Path>>(path: P, creator: String) -> Result<Self, MMXError> {
         let file = OpenOptions::new()
             .create(true)
+            .read(true)
             .write(true)
             .truncate(true)
             .open(path)?;
