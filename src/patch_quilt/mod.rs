@@ -45,9 +45,27 @@ pub struct PatchQuilt {
 
 impl PatchQuilt {
     pub fn new(_config: RefinementConfig) -> Self { Self { patches: Vec::new() } }
-    pub fn list_chunks(&self) -> Vec<String> { Vec::new() }
-    pub fn update_patch_quilt(&mut self, _subject: String, _patches: Vec<Patch>) {}
-    pub fn find_patches_near(&self, _position: Point3<f32>, _radius: f32, _subject: Option<&str>) -> Vec<&Patch> { vec![] }
+
+    /// Return IDs of all stored patches
+    pub fn list_chunks(&self) -> Vec<String> {
+        self.patches.iter().map(|p| p.id.to_string()).collect()
+    }
+
+    /// Append new patches associated with a subject
+    pub fn update_patch_quilt(&mut self, _subject: String, patches: Vec<Patch>) {
+        self.patches.extend(patches);
+    }
+
+    /// Find patches within the given radius of a point, optionally filtered by subject id
+    pub fn find_patches_near(&self, position: Point3<f32>, radius: f32, subject: Option<&str>) -> Vec<&Patch> {
+        self.patches
+            .iter()
+            .filter(|p| {
+                let dist = (p.position - position).norm();
+                dist <= radius && subject.map_or(true, |s| p.source_id == s)
+            })
+            .collect()
+    }
 }
 
 #[derive(Debug, Clone)]

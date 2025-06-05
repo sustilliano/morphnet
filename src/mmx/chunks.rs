@@ -1,6 +1,6 @@
 //! MMX chunk implementations for different data types
 
-use super::{ChunkType, CompressionType, MMXError};
+use super::MMXError;
 use ndarray::{ArrayD, IxDyn};
 use nalgebra::{Point3, Vector3};
 use serde::{Deserialize, Serialize};

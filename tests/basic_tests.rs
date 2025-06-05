@@ -5,6 +5,7 @@ use morphnet_gtl::morphnet::TemplateFactory;
 use tempfile::tempdir;
 use ndarray::{Array3, ArrayD, IxDyn};
 use nalgebra::Point3;
+use morphnet_gtl::morphnet::stack_tensors;
 
 #[test]
 fn test_mmx_basic_operations() {
@@ -226,8 +227,7 @@ fn test_geometric_template_roundtrip() {
 
 #[cfg(test)]
 mod spatial_tests {
-    use super::*;
-    use morphnet_gtl::spatial::*;
+    use morphnet_gtl::spatial::{SpatialConfig, EventSeverity, RiskLevel};
 
     #[test]
     fn test_spatial_config_defaults() {
@@ -239,8 +239,6 @@ mod spatial_tests {
 
     #[test]
     fn test_event_severity_ordering() {
-        use morphnet_gtl::spatial::EventSeverity;
-
         assert!(EventSeverity::Info < EventSeverity::Warning);
         assert!(EventSeverity::Warning < EventSeverity::Critical);
         assert!(EventSeverity::Critical < EventSeverity::Emergency);
@@ -248,11 +246,17 @@ mod spatial_tests {
 
     #[test]
     fn test_risk_level_ordering() {
-        use morphnet_gtl::spatial::RiskLevel;
-
         assert!(RiskLevel::Low < RiskLevel::Moderate);
         assert!(RiskLevel::Moderate < RiskLevel::High);
         assert!(RiskLevel::High < RiskLevel::Critical);
         assert!(RiskLevel::Critical < RiskLevel::Extreme);
     }
+}
+
+#[test]
+fn test_stack_tensors_helper() {
+    let t1 = Array3::<f32>::zeros((1, 2, 2));
+    let t2 = Array3::<f32>::ones((1, 2, 2));
+    let stacked = stack_tensors(&[t1, t2]);
+    assert_eq!(stacked.shape(), &[2, 2, 2]);
 }

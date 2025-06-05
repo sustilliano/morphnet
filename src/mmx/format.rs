@@ -119,3 +119,46 @@ pub fn calculate_checksum(data: &[u8]) -> [u8; 32] {
     hasher.update(data);
     hasher.finalize().into()
 }
+
+/// Serialize the chunk directory to the end of the file. The function appends
+/// the directory bytes followed by their length as a little-endian u64. The
+/// offset of the written directory is returned so callers can update header
+/// metadata if desired.
+pub fn write_directory<W: Write + Seek>(
+    writer: &mut W,
+    directory: &ChunkDirectory,
+) -> Result<u64, MMXError> {
+    // Serialize directory using bincode for compactness
+    let dir_data = bincode::serialize(directory).map_err(|e| {
+        MMXError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, e))
+    })?;
+
+    // Seek to end so directory is appended
+    let offset = writer.seek(SeekFrom::End(0))?;
+    writer.write_all(&dir_data)?;
+    writer.write_u64::<LittleEndian>(dir_data.len() as u64)?;
+    Ok(offset)
+}
+
+/// Read the chunk directory that was written with `write_directory`.
+pub fn read_directory<R: Read + Seek>(reader: &mut R) -> Result<ChunkDirectory, MMXError> {
+    // The last 8 bytes contain the directory length
+    let file_size = reader.seek(SeekFrom::End(0))?;
+    if file_size < 8 {
+        return Err(MMXError::DataIntegrity("missing directory".into()));
+    }
+
+    reader.seek(SeekFrom::End(-8))?;
+    let dir_size = reader.read_u64::<LittleEndian>()?;
+    if dir_size > file_size - 8 {
+        return Err(MMXError::DataIntegrity("invalid directory size".into()));
+    }
+
+    reader.seek(SeekFrom::End(-(8 + dir_size as i64)))?;
+    let mut dir_data = vec![0u8; dir_size as usize];
+    reader.read_exact(&mut dir_data)?;
+
+    let directory: ChunkDirectory = bincode::deserialize(&dir_data)
+        .map_err(|e| MMXError::DataIntegrity(e.to_string()))?;
+    Ok(directory)
+}
