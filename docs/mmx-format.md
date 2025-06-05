@@ -158,7 +158,7 @@ MetaData
 ⸻
 
 # Example API Calls
-'''rust
+```rust
 // Create new MMX file
 let mut mmx = MMXFile::create("output.mmx", "sustilliano".to_string())?;
 
@@ -170,7 +170,7 @@ mmx.write_mesh("meshes/frame001", mesh)?;
 
 // Read back a tensor
 let tensor = mmx.read_tensor("frames/00001")?;
-'''
+```
 
 ⸻
 
