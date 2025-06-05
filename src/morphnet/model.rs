@@ -3,6 +3,7 @@ use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use ndarray::Array3;
 use crate::TensorData;
+use linfa_logistic::FittedLogisticRegression;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Device {
@@ -35,6 +36,7 @@ impl MorphNetBuilder {
         Ok(MorphNet {
             body_plan: BodyPlanModel { templates: Vec::new() },
             brightness_threshold: self.config.brightness_threshold,
+            logistic_model: None,
         })
     }
 }
@@ -120,6 +122,9 @@ pub struct MorphNet {
     pub body_plan: BodyPlanModel,
     /// Threshold used for basic brightness classification
     pub brightness_threshold: f32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub logistic_model: Option<FittedLogisticRegression<f64, usize>>,
 }
 
 impl MorphNet {
@@ -127,6 +132,7 @@ impl MorphNet {
         Self {
             body_plan: BodyPlanModel { templates: Vec::new() },
             brightness_threshold: 0.5,
+            logistic_model: None,
         }
     }
 
