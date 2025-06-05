@@ -170,7 +170,7 @@ mmx.write_mesh("meshes/frame001", mesh)?;
 
 // Read back a tensor
 let tensor = mmx.read_tensor("frames/00001")?;
-
+'''
 
 ⸻
 
@@ -179,7 +179,7 @@ let tensor = mmx.read_tensor("frames/00001")?;
 	•	Fine-grained permissioning: Access control on logical regions
 	•	Remote streaming: Incremental upload/download over network
 	•	Versioned/branchable file trees: For collaborative spatial intelligence work
-'''
+
 ⸻
 
 # FAQ
