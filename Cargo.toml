@@ -1,7 +1,7 @@
 [package]
 name = "morphnet-gtl"
 version = "0.1.0"
-edition = "2025"
+edition = "2021"
 authors = ["Your Name <your.email@example.com>"]
 description = "Geometric Template Learning and Spatial Intelligence Framework"
 license = "MIT OR Apache-2.0"
