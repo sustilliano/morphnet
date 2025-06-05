@@ -2,6 +2,7 @@ use super::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use ndarray::Array3;
+use crate::TensorData;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Device {
@@ -17,6 +18,8 @@ impl Default for Device {
 pub struct MorphNetConfig {
     pub num_species: usize,
     pub device: Device,
+    /// Threshold used by the simple brightness based classifier
+    pub brightness_threshold: f32,
 }
 
 pub struct MorphNetBuilder {
@@ -27,7 +30,13 @@ impl MorphNetBuilder {
     pub fn new() -> Self { Self { config: MorphNetConfig::default() } }
     pub fn with_device(mut self, device: Device) -> Self { self.config.device = device; self }
     pub fn with_num_species(mut self, n: usize) -> Self { self.config.num_species = n; self }
-    pub fn build(self) -> Result<MorphNet> { Ok(MorphNet::new()) }
+    pub fn with_brightness_threshold(mut self, t: f32) -> Self { self.config.brightness_threshold = t; self }
+    pub fn build(self) -> Result<MorphNet> {
+        Ok(MorphNet {
+            body_plan: BodyPlanModel { templates: Vec::new() },
+            brightness_threshold: self.config.brightness_threshold,
+        })
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -109,14 +118,20 @@ pub struct BodyPlanModel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MorphNet {
     pub body_plan: BodyPlanModel,
+    /// Threshold used for basic brightness classification
+    pub brightness_threshold: f32,
 }
 
 impl MorphNet {
     pub fn new() -> Self {
-        Self { body_plan: BodyPlanModel { templates: Vec::new() } }
+        Self {
+            body_plan: BodyPlanModel { templates: Vec::new() },
+            brightness_threshold: 0.5,
+        }
     }
 
-    pub fn classify(&self, _input: &Array3<f32>) -> Result<ClassificationResult> {
-        Ok(ClassificationResult { label: "unknown".to_string(), confidence: 0.0 })
+    pub fn classify(&self, input: &Array3<f32>) -> Result<ClassificationResult> {
+        let tensor = TensorData::new(input.clone().into_dyn());
+        classify(self, &tensor)
     }
 }
