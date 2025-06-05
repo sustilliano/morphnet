@@ -73,9 +73,11 @@ impl MMXFile {
         let mut reader = BufReader::new(&file);
         let header = read_header(&mut reader)?;
         
-        // Read directory (simplified - would be at end of file)
-        let directory = ChunkDirectory {
-            chunks: HashMap::new(), // Would load from file
+        // Attempt to read directory from end of file. If this fails, fall back
+        // to an empty directory so legacy files still open.
+        let directory = match read_directory(&mut reader) {
+            Ok(dir) => dir,
+            Err(_) => ChunkDirectory { chunks: HashMap::new() },
         };
         
         Ok(Self {
@@ -102,6 +104,42 @@ impl MMXFile {
         let data = bincode::serialize(&mesh)
             .map_err(|e| MMXError::DataIntegrity(e.to_string()))?;
         self.write_chunk(path, ChunkType::Mesh, data, CompressionType::Lz4)
+    }
+
+    /// Write sequence chunk
+    pub fn write_sequence(&mut self, path: &str, seq: SequenceData) -> Result<(), MMXError> {
+        let data = bincode::serialize(&seq).map_err(|e| MMXError::DataIntegrity(e.to_string()))?;
+        self.write_chunk(path, ChunkType::Sequence, data, CompressionType::Lz4)
+    }
+
+    /// Read sequence chunk
+    pub fn read_sequence(&mut self, path: &str) -> Result<SequenceData, MMXError> {
+        let data = self.read_chunk(path)?;
+        bincode::deserialize(&data).map_err(|e| MMXError::DataIntegrity(e.to_string()))
+    }
+
+    /// Write text chunk
+    pub fn write_text(&mut self, path: &str, text: TextData) -> Result<(), MMXError> {
+        let data = bincode::serialize(&text).map_err(|e| MMXError::DataIntegrity(e.to_string()))?;
+        self.write_chunk(path, ChunkType::Text, data, CompressionType::Lz4)
+    }
+
+    /// Read text chunk
+    pub fn read_text(&mut self, path: &str) -> Result<TextData, MMXError> {
+        let data = self.read_chunk(path)?;
+        bincode::deserialize(&data).map_err(|e| MMXError::DataIntegrity(e.to_string()))
+    }
+
+    /// Write metadata chunk
+    pub fn write_metadata(&mut self, path: &str, metadata: MetaData) -> Result<(), MMXError> {
+        let data = bincode::serialize(&metadata).map_err(|e| MMXError::DataIntegrity(e.to_string()))?;
+        self.write_chunk(path, ChunkType::Meta, data, CompressionType::Lz4)
+    }
+
+    /// Read metadata chunk
+    pub fn read_metadata(&mut self, path: &str) -> Result<MetaData, MMXError> {
+        let data = self.read_chunk(path)?;
+        bincode::deserialize(&data).map_err(|e| MMXError::DataIntegrity(e.to_string()))
     }
     
     /// Read mesh chunk
@@ -218,7 +256,18 @@ impl MMXFile {
 
 impl Drop for MMXFile {
     fn drop(&mut self) {
-        // TODO: persist directory to file on close
+        // Only persist on writable modes. Errors are ignored in Drop
+        if matches!(self.mode, MMXMode::Write | MMXMode::Append) {
+            if let Ok(mut writer) = self.file.try_clone() {
+                if write_directory(&mut writer, &self.directory).is_ok() {
+                    if let Ok(size) = writer.seek(SeekFrom::End(0)) {
+                        self.header.file_size = size;
+                        let _ = writer.seek(SeekFrom::Start(0));
+                        let _ = write_header(&mut writer, &self.header);
+                    }
+                }
+            }
+        }
     }
 }
 
