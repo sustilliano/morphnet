@@ -46,6 +46,7 @@ linfa-reduction = "0.7"
 uuid = { version = "1.0", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.0", features = ["derive"] }
+eframe = "0.31"
 
 [dev-dependencies]
 criterion = "0.5"

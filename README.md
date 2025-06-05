@@ -210,6 +210,9 @@ cargo run --example patch_refinement
 
 # MMX format demo
 cargo run --example mmx_demo
+
+# Simple GUI
+cargo run --example gui
 ```
 
 ## 📚 Documentation
