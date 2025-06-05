@@ -60,6 +60,7 @@ pub mod prelude {
         GeometricTemplate, TemplateFactory, SpatialConfig,
         GeometricParameters, GeometricTemplateData, ExtendedBodyPlan,
     };
+    pub use crate::morphnet::{train, train_logistic};
     pub use ndarray::{Array, Array1, Array2, Array3, ArrayD};
     pub use nalgebra::{Point3, Vector3, Matrix3, Matrix4};
 }
