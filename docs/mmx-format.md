@@ -158,7 +158,7 @@ MetaData
 ⸻
 
 # Example API Calls
-
+'''rust
 // Create new MMX file
 let mut mmx = MMXFile::create("output.mmx", "sustilliano".to_string())?;
 
@@ -179,7 +179,7 @@ let tensor = mmx.read_tensor("frames/00001")?;
 	•	Fine-grained permissioning: Access control on logical regions
 	•	Remote streaming: Incremental upload/download over network
 	•	Versioned/branchable file trees: For collaborative spatial intelligence work
-
+'''
 ⸻
 
 # FAQ
