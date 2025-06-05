@@ -1,15 +1,11 @@
-Absolutely! Here’s a detailed expansion for your mmx_format.md that covers the file layout, all key structures, atomicity, chunking, and streaming features, with technical rigor and commentary suitable for both developers and architects:
-
-⸻
-
-MMX Format Specification
+# MMX Format Specification
 
 The MMX (Multimedia Matrix) format powers atomic, multimodal, tensor-backed storage and streaming for the MorphNet framework.
 It is engineered for fast I/O, live updates, journaling, and efficient recovery—optimized for computer vision, geometry, robotics, and AI.
 
 ⸻
 
-File Layout
+# File Layout
 
 An MMX file is a binary container with the following high-level structure:
 
@@ -45,7 +41,7 @@ Order and details:
 
 ⸻
 
-Header Fields
+# Header Fields
 
 The header encodes global information for the file and provides safe detection/validation.
 
@@ -97,7 +93,7 @@ Compression & Integrity:
 
 ⸻
 
-Directory Structure
+# Directory Structure
 	•	The directory is a map of chunk names to metadata.
 	•	Includes logical path, chunk type, file offset, size, compression type, shape, dtype, logical region, and checksum.
 
@@ -122,7 +118,7 @@ Example:
 
 ⸻
 
-Data Types
+# Data Types
 
 TensorData
 	•	Arbitrary-dimensional arrays (float32, uint8, etc.)
@@ -147,21 +143,21 @@ MetaData
 
 ⸻
 
-Streaming and Live Write
+# Streaming and Live Write
 	•	Chunked streaming: Write new frames/patches incrementally (append-only), directory keeps track of latest
 	•	Partial reads: Only chunks of interest are mapped/decoded—ideal for low-latency use (e.g., e-ink, robotics, AR)
 	•	Atomic caching: Local buffer is flushed only when chunk and directory write complete
 
 ⸻
 
-API Guarantees
+# API Guarantees
 	•	All reads and writes are atomic at the chunk level
 	•	File remains consistent even after abrupt shutdown (last valid directory is scanned on load)
 	•	Parallel access supported (reads never block, writes only block append region)
 
 ⸻
 
-Example API Calls
+# Example API Calls
 
 // Create new MMX file
 let mut mmx = MMXFile::create("output.mmx", "sustilliano".to_string())?;
@@ -178,7 +174,7 @@ let tensor = mmx.read_tensor("frames/00001")?;
 
 ⸻
 
-Planned Extensions
+# Planned Extensions
 	•	Transactional Journaling: Multi-operation commits/rollback
 	•	Fine-grained permissioning: Access control on logical regions
 	•	Remote streaming: Incremental upload/download over network
@@ -186,7 +182,7 @@ Planned Extensions
 
 ⸻
 
-FAQ
+# FAQ
 
 Q: Why not HDF5, Parquet, NPZ, etc.?
 A: MMX is atomic, append-friendly, cross-modal, and specifically tuned for high-throughput, journaling, and low-latency AI/robotics pipelines. It combines the best of scientific file formats and streaming logs.
@@ -196,11 +192,6 @@ A: Absolutely—any tensor, mesh, sequence, or document structure is supported.
 
 ⸻
 
-References
+# References
 	•	See src/mmx/ for Rust implementation details.
 	•	MorphNet Main README
-
-⸻
-
-Let me know if you want deep-dive technical binary layout diagrams, sample chunk bytes, or tips for porting MMX to Python/C++.
-Or want a “field-by-field” Rust struct breakdown with serde/bincode layouts!
