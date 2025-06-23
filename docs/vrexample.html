@@ -27,24 +27,6 @@
         max-width: 300px;
     }
     
-    #vrButton {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 15px 30px;
-        background: #ff6b35;
-        color: white;
-        border: none;
-        border-radius: 25px;
-        font-size: 16px;
-        cursor: pointer;
-        z-index: 100;
-    }
-    
-    #vrButton:hover {
-        background: #ff8c61;
-    }
     
     canvas {
         display: block;
@@ -61,11 +43,10 @@
         <p>🧩 Patch Quilt: Dynamic mesh refinement from MMX data</p>
         <p>⚡ Tensor Physics: Pre-computed collision boundaries & mass distribution</p>
         <p>📊 No physics engine needed - cross-referencing tensor memory</p>
-    </div>
+</div>
 
-<button id="vrButton">Enter VR</button>
-
-<script>
+<script type="module">
+    import { VRButton } from './VRButton.js';
     // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -74,6 +55,7 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.xr.enabled = true;
+    renderer.xr.setReferenceSpaceType('local-floor');
     document.body.appendChild(renderer.domElement);
 
     // MorphNet Tensor-Native Physics System
@@ -409,22 +391,8 @@
     const spatialIntelligence = new SpatialIntelligence();
     const interactiveObjects = [];
 
-    // VR Button setup
-    const vrButton = document.getElementById('vrButton');
-    vrButton.addEventListener('click', () => {
-        if (navigator.xr) {
-            navigator.xr.requestSession('immersive-vr').then((session) => {
-                renderer.xr.setSession(session);
-                vrButton.style.display = 'none';
-                document.getElementById('info').style.display = 'none';
-            }).catch(err => {
-                console.log('VR not available:', err);
-                alert('VR not available. Make sure you\'re using a VR-capable browser on Quest Pro.');
-            });
-        } else {
-            alert('WebXR not supported in this browser');
-        }
-    });
+    // VR Button setup using Three.js helper
+    document.body.appendChild(VRButton.createButton(renderer));
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
