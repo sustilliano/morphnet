@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MorphNet VR Intelligence World</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- GLTF loader for importing local models -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
     <style>
         body {
             margin: 0;
@@ -44,12 +46,16 @@
         <p>⚡ Tensor Physics: Pre-computed collision boundaries & mass distribution</p>
         <p>📊 No physics engine needed - cross-referencing tensor memory</p>
 </div>
+<input type="file" id="modelFile" accept=".gltf,.glb" style="position:absolute; top:10px; right:10px; z-index:100;" />
 
 <script type="module">
     import { VRButton } from './VRButton.js';
     // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const userRig = new THREE.Group();
+    userRig.add(camera);
+    scene.add(userRig);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
@@ -391,6 +397,48 @@
     const spatialIntelligence = new SpatialIntelligence();
     const interactiveObjects = [];
 
+    // Import local GLTF models
+    const fileInput = document.getElementById('modelFile');
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const loader = new THREE.GLTFLoader();
+            loader.parse(ev.target.result, '', (gltf) => {
+                const model = gltf.scene;
+                model.position.set(0, 0, -2);
+                scene.add(model);
+                interactiveObjects.push(model);
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // VR Button setup using Three.js helper
+    document.body.appendChild(VRButton.createButton(renderer));
+    let roomBoundary = null;
+    renderer.xr.addEventListener('sessionstart', () => {
+        const session = renderer.xr.getSession();
+        session.requestReferenceSpace('bounded-floor').then(space => {
+            if (space && space.boundsGeometry) {
+                const points = space.boundsGeometry.map(p => new THREE.Vector3(p.x, 0, p.z));
+                if (points.length > 0) {
+                    points.push(points[0].clone());
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const material = new THREE.LineBasicMaterial({ color: 0xff00ff });
+                    roomBoundary = new THREE.Line(geometry, material);
+                    scene.add(roomBoundary);
+                }
+            }
+        }).catch(()=>{});
+    });
+    renderer.xr.addEventListener('sessionend', () => {
+        if (roomBoundary) {
+            scene.remove(roomBoundary);
+            roomBoundary = null;
+        }
+    });
     // VR Button setup using Three.js helper
     document.body.appendChild(VRButton.createButton(renderer));
 
@@ -611,30 +659,30 @@
     // Primary ring of adaptive structures
     for (let i = 0; i < 8; i++) {
         const angle = (i / 8) * Math.PI * 2;
-        const radius = 15;
+        const radius = 8;
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
         const structureType = structureTypes[i % structureTypes.length];
-        createAdaptiveStructure(x, 10, z, structureType);
+        createAdaptiveStructure(x, 3, z, structureType);
     }
     
     // Secondary ring with spatial intelligence nodes
     for (let i = 0; i < 5; i++) {
         const angle = (i / 5) * Math.PI * 2;
-        const radius = 25;
+        const radius = 12;
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
-        createAdaptiveStructure(x, 15, z, 'neural_node');
+        createAdaptiveStructure(x, 4, z, 'neural_node');
     }
     
     // Central morphology hub
-    createAdaptiveStructure(0, 20, 0, 'morphic_spire');
+    createAdaptiveStructure(0, 5, 0, 'morphic_spire');
     
     // Create floating platforms
-    createPlatform(-20, 8, -20, 6);
-    createPlatform(25, 12, 15, 8);
-    createPlatform(-15, 16, 30, 5);
-    createPlatform(0, 25, 0, 10);
+    createPlatform(-10, 2, -10, 6);
+    createPlatform(12, 3, 12, 8);
+    createPlatform(-8, 3, 15, 5);
+    createPlatform(0, 1.5, 0, 10);
 
     // Create particle system
     const particleSystem = createParticles();
@@ -645,7 +693,8 @@
     }, 100);
 
     // Camera setup
-    camera.position.set(0, 5, 10);
+    camera.position.set(0, 1.6, 0);
+    userRig.position.set(0, 0, 3);
 
     // Movement controls
     const keys = {};
@@ -803,12 +852,12 @@
 
         // Desktop movement
         if (!renderer.xr.isPresenting) {
-            if (keys['w']) camera.position.z -= moveSpeed;
-            if (keys['s']) camera.position.z += moveSpeed;
-            if (keys['a']) camera.position.x -= moveSpeed;
-            if (keys['d']) camera.position.x += moveSpeed;
-            if (keys[' ']) camera.position.y += moveSpeed;
-            if (keys['shift']) camera.position.y -= moveSpeed;
+            if (keys['w']) userRig.position.z -= moveSpeed;
+            if (keys['s']) userRig.position.z += moveSpeed;
+            if (keys['a']) userRig.position.x -= moveSpeed;
+            if (keys['d']) userRig.position.x += moveSpeed;
+            if (keys[' ']) userRig.position.y += moveSpeed;
+            if (keys['shift']) userRig.position.y -= moveSpeed;
         }
 
         // Animate objects with MorphNet spatial intelligence using tensor data
@@ -865,7 +914,26 @@
                 obj.material.opacity = 0.1 + Math.sin(time * 2 + strength * 10) * 0.3;
             }
         });
-        
+
+        // Simple VR locomotion using controller thumbsticks
+        if (renderer.xr.isPresenting) {
+            const session = renderer.xr.getSession();
+            for (const source of session.inputSources) {
+                const gp = source.gamepad;
+                if (gp && gp.axes.length >= 2) {
+                    const xAxis = gp.axes[2] !== undefined ? gp.axes[2] : gp.axes[0];
+                    const yAxis = gp.axes[3] !== undefined ? gp.axes[3] : gp.axes[1];
+                    const forward = new THREE.Vector3();
+                    camera.getWorldDirection(forward);
+                    forward.y = 0;
+                    forward.normalize();
+                    const sideways = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0,1,0)).normalize();
+                    userRig.position.addScaledVector(forward, -yAxis * moveSpeed);
+                    userRig.position.addScaledVector(sideways, xAxis * moveSpeed);
+                }
+            }
+        }
+
         // Process patch quilt refinements using tensor-stored geometry
         patchQuilt.processRefinements();
 
