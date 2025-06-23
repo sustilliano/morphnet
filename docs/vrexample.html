@@ -439,6 +439,8 @@
             roomBoundary = null;
         }
     });
+    // VR Button setup using Three.js helper
+    document.body.appendChild(VRButton.createButton(renderer));
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
