@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphNet VR Intelligence World</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+```
+    #info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        background: rgba(0,0,0,0.7);
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 100;
+        max-width: 300px;
+    }
+    
+    #vrButton {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 30px;
+        background: #ff6b35;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 100;
+    }
+    
+    #vrButton:hover {
+        background: #ff8c61;
+    }
+    
+    canvas {
+        display: block;
+    }
+</style>
+```
+
+</head>
+<body>
+    <div id="info">
+        <h3>🧠 MorphNet VR Intelligence World</h3>
+        <p>Desktop: WASD to move, mouse to look</p>
+        <p>VR: Use controllers to interact with tensor-stored objects</p>
+        <p>🔬 Spatial Intelligence: Real-time tensor monitoring</p>
+        <p>🧩 Patch Quilt: Dynamic mesh refinement from MMX data</p>
+        <p>⚡ Tensor Physics: Pre-computed collision boundaries & mass distribution</p>
+        <p>📊 No physics engine needed - cross-referencing tensor memory</p>
+    </div>
+
+```
+<button id="vrButton">Enter VR</button>
+
+<script>
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // MorphNet Tensor-Native Physics System
+    class TensorPhysics {
+        constructor() {
+            this.gravity = new THREE.Vector3(0, -9.82, 0);
+            this.objectStates = new Map(); // Tensor-stored physics states
+            this.collisionCache = new Map(); // Pre-computed collision boundaries
+        }
+        
+        registerObject(spatialId, geometricTemplate, mesh) {
+            // Extract physics properties from geometric template
+            const bbox = new THREE.Box3().setFromObject(mesh);
+            const size = bbox.getSize(new THREE.Vector3());
+            const center = bbox.getCenter(new THREE.Vector3());
+            
+            // Store tensor-native physics state
+            this.objectStates.set(spatialId, {
+                position: mesh.position.clone(),
+                velocity: new THREE.Vector3(0, 0, 0),
+                acceleration: new THREE.Vector3(0, 0, 0),
+                mass: this.calculateMassFromTemplate(geometricTemplate),
+                boundingVolume: this.extractBoundingVolumeFromTensor(geometricTemplate, size),
+                collisionPoints: this.getCollisionPointsFromPatchQuilt(geometricTemplate.keypoints),
+                structuralIntegrity: geometricTemplate.confidence,
+                lastUpdate: Date.now(),
+                isKinematic: geometricTemplate.tensorPhysics?.isKinematic || false
+            });
+            
+            // Pre-compute collision boundaries from tensor data
+            this.collisionCache.set(spatialId, {
+                vertices: this.extractVerticesFromTensor(mesh.geometry),
+                bounds: bbox,
+                centerOfMass: center
+            });
+        }
+        
+        calculateMassFromTemplate(template) {
+            // Use template constraints to determine realistic mass
+            if (template.tensorPhysics && template.tensorPhysics.mass !== undefined) {
+                return template.tensorPhysics.mass;
+            }
+            const volumeMap = {
+                'morphic_spire': 25.0,
+                'neural_node': 8.0,
+                'spatial_anchor': 64.0,
+                'kinematic_platform': 0
+            };
+            return volumeMap[template.type] || 10.0;
+        }
+        
+        extractBoundingVolumeFromTensor(template, size) {
+            return {
+                type: template.type,
+                dimensions: size,
+                keypoints: template.keypoints,
+                volume: size.x * size.y * size.z
+            };
+        }
+        
+        getCollisionPointsFromPatchQuilt(keypoints) {
+            if (!keypoints) return [];
+            return keypoints.map(point => ({
+                position: point,
+                normal: new THREE.Vector3(0, 1, 0),
+                confidence: point.confidence || 1.0
+            }));
+        }
+        
+        extractVerticesFromTensor(geometry) {
+            const positions = geometry.attributes.position.array;
+            const vertices = [];
+            for (let i = 0; i < positions.length; i += 3) {
+                vertices.push(new THREE.Vector3(positions[i], positions[i+1], positions[i+2]));
+            }
+            return vertices;
+        }
+        
+        update(deltaTime) {
+            for (const [spatialId, state] of this.objectStates) {
+                if (state.isKinematic) continue; // Skip kinematic objects
+                
+                // Apply gravity
+                state.acceleration.copy(this.gravity);
+                
+                // Ground collision check using pre-computed bounds
+                const collisionData = this.collisionCache.get(spatialId);
+                if (collisionData && state.position.y <= 0.5) {
+                    state.position.y = 0.5;
+                    state.velocity.y = Math.max(0, -state.velocity.y * 0.3); // Bounce
+                }
+                
+                // Integrate using stored tensor velocities
+                state.velocity.addScaledVector(state.acceleration, deltaTime);
+                state.position.addScaledVector(state.velocity, deltaTime);
+                
+                state.lastUpdate = Date.now();
+            }
+        }
+        
+        getState(spatialId) {
+            return this.objectStates.get(spatialId);
+        }
+        
+        applyImpulse(spatialId, force) {
+            const state = this.objectStates.get(spatialId);
+            if (state && !state.isKinematic && state.mass > 0) {
+                const impulse = force.clone().divideScalar(state.mass);
+                state.velocity.add(impulse);
+            }
+        }
+        
+        setKinematicPosition(spatialId, position) {
+            const state = this.objectStates.get(spatialId);
+            if (state && state.isKinematic) {
+                state.position.copy(position);
+            }
+        }
+    }
+
+    // Enhanced MorphNet Geometric Template System with Tensor Physics
+    class GeometricTemplate {
+        constructor(type, keypoints, constraints) {
+            this.type = type;
+            this.keypoints = keypoints || this.generateDefaultKeypoints(type);
+            this.constraints = constraints || this.generateDefaultConstraints(type);
+            this.confidence = 1.0;
+            this.mesh = null;
+            
+            // Tensor-stored physics properties
+            this.tensorPhysics = {
+                mass: this.calculateTensorMass(),
+                centerOfMass: this.calculateCenterOfMass(),
+                momentOfInertia: this.calculateMomentOfInertia(),
+                structuralStiffness: this.calculateStiffness(),
+                collisionComplexity: this.keypoints.length,
+                isKinematic: type === 'kinematic_platform'
+            };
+        }
+        
+        generateDefaultKeypoints(type) {
+            switch(type) {
+                case 'morphic_spire':
+                    return [
+                        { x: 0, y: 0, z: 0, confidence: 1.0, type: 'base' },
+                        { x: 0.5, y: 2, z: 0, confidence: 0.9, type: 'mid_low' },
+                        { x: -0.3, y: 4, z: 0.2, confidence: 0.8, type: 'mid_high' },
+                        { x: 0, y: 8, z: 0, confidence: 0.95, type: 'apex' }
+                    ];
+                case 'neural_node':
+                    return [
+                        { x: 0, y: 0, z: 0, confidence: 1.0, type: 'center' },
+                        { x: 1.5, y: 0, z: 0, confidence: 0.9, type: 'vertex' },
+                        { x: -1.5, y: 0, z: 0, confidence: 0.9, type: 'vertex' },
+                        { x: 0, y: 1.5, z: 0, confidence: 0.9, type: 'vertex' },
+                        { x: 0, y: -1.5, z: 0, confidence: 0.9, type: 'vertex' }
+                    ];
+                case 'spatial_anchor':
+                    return [
+                        { x: -1.5, y: -1.5, z: -1.5, confidence: 1.0, type: 'corner' },
+                        { x: 1.5, y: -1.5, z: -1.5, confidence: 1.0, type: 'corner' },
+                        { x: 1.5, y: 1.5, z: -1.5, confidence: 1.0, type: 'corner' },
+                        { x: -1.5, y: 1.5, z: -1.5, confidence: 1.0, type: 'corner' },
+                        { x: -1.5, y: -1.5, z: 1.5, confidence: 1.0, type: 'corner' },
+                        { x: 1.5, y: -1.5, z: 1.5, confidence: 1.0, type: 'corner' },
+                        { x: 1.5, y: 1.5, z: 1.5, confidence: 1.0, type: 'corner' },
+                        { x: -1.5, y: 1.5, z: 1.5, confidence: 1.0, type: 'corner' }
+                    ];
+                default:
+                    return [{ x: 0, y: 0, z: 0, confidence: 1.0, type: 'center' }];
+            }
+        }
+        
+        generateDefaultConstraints(type) {
+            return [
+                { type: 'structural_integrity', threshold: 0.8 },
+                { type: 'keypoint_connectivity', minConnections: 2 },
+                { type: 'geometric_validity', maxDeviation: 0.1 }
+            ];
+        }
+        
+        calculateTensorMass() {
+            const baseVolumes = {
+                'morphic_spire': 25.0,
+                'neural_node': 8.0,
+                'spatial_anchor': 64.0,
+                'kinematic_platform': 0
+            };
+            
+            const keypointModifier = this.keypoints.reduce((sum, kp) => sum + kp.confidence, 0) / this.keypoints.length;
+            return (baseVolumes[this.type] || 10.0) * keypointModifier;
+        }
+        
+        calculateCenterOfMass() {
+            const center = { x: 0, y: 0, z: 0 };
+            let totalWeight = 0;
+            
+            this.keypoints.forEach(kp => {
+                const weight = kp.confidence;
+                center.x += kp.x * weight;
+                center.y += kp.y * weight;
+                center.z += kp.z * weight;
+                totalWeight += weight;
+            });
+            
+            if (totalWeight > 0) {
+                center.x /= totalWeight;
+                center.y /= totalWeight;
+                center.z /= totalWeight;
+            }
+            
+            return center;
+        }
+        
+        calculateMomentOfInertia() {
+            let Ixx = 0, Iyy = 0, Izz = 0;
+            const com = this.calculateCenterOfMass();
+            
+            this.keypoints.forEach(kp => {
+                const dx = kp.x - com.x;
+                const dy = kp.y - com.y;
+                const dz = kp.z - com.z;
+                const mass = kp.confidence;
+                
+                Ixx += mass * (dy * dy + dz * dz);
+                Iyy += mass * (dx * dx + dz * dz);
+                Izz += mass * (dx * dx + dy * dy);
+            });
+            
+            return { Ixx, Iyy, Izz };
+        }
+        
+        calculateStiffness() {
+            let stiffness = 0;
+            this.constraints.forEach(constraint => {
+                if (constraint.type === 'structural_integrity') {
+                    stiffness += constraint.threshold;
+                }
+            });
+            return stiffness / this.constraints.length;
+        }
+    }
+
+    // Patch Quilt System for dynamic mesh refinement
+    class PatchQuilt {
+        constructor() {
+            this.patches = new Map();
+            this.refinementQueue = [];
+        }
+        
+        addPatch(id, geometry, confidence) {
+            this.patches.set(id, {
+                geometry,
+                confidence,
+                timestamp: Date.now()
+            });
+            
+            if (confidence > 0.8) {
+                this.refinementQueue.push(id);
+            }
+        }
+        
+        processRefinements() {
+            while (this.refinementQueue.length > 0) {
+                const patchId = this.refinementQueue.shift();
+                const patch = this.patches.get(patchId);
+                if (patch && patch.confidence > 0.8) {
+                    this.refineMesh(patch);
+                }
+            }
+        }
+        
+        refineMesh(patch) {
+            console.log('Refining mesh with patch confidence:', patch.confidence);
+        }
+    }
+
+    // Spatial Intelligence Engine
+    class SpatialIntelligence {
+        constructor() {
+            this.trackedObjects = new Map();
+            this.predictions = [];
+            this.morphologyClassifier = new MorphologyClassifier();
+        }
+        
+        processRealTimeUpdate(objectId, position, velocity) {
+            const prevData = this.trackedObjects.get(objectId);
+            
+            if (prevData) {
+                const acceleration = velocity.clone().sub(prevData.velocity);
+                const stressLevel = acceleration.length();
+                
+                if (stressLevel > 0.1) {
+                    this.predictions.push({
+                        objectId,
+                        type: 'structural_stress',
+                        confidence: Math.min(stressLevel, 1.0),
+                        timestamp: Date.now()
+                    });
+                }
+            }
+            
+            this.trackedObjects.set(objectId, {
+                position: position.clone(),
+                velocity: velocity.clone(),
+                timestamp: Date.now()
+            });
+            
+            return this.predictions.filter(p => p.timestamp > Date.now() - 5000);
+        }
+        
+        classifyMorphology(object) {
+            return this.morphologyClassifier.classify(object);
+        }
+    }
+
+    // Simplified Morphology Classifier
+    class MorphologyClassifier {
+        classify(object) {
+            const bbox = new THREE.Box3().setFromObject(object);
+            const size = bbox.getSize(new THREE.Vector3());
+            const volume = size.x * size.y * size.z;
+            
+            if (volume > 100) return { species: 'large_structure', confidence: 0.9 };
+            if (size.y > size.x && size.y > size.z) return { species: 'vertical_element', confidence: 0.8 };
+            return { species: 'unknown', confidence: 0.5 };
+        }
+    }
+
+    // Initialize systems
+    const tensorPhysics = new TensorPhysics();
+    const patchQuilt = new PatchQuilt();
+    const spatialIntelligence = new SpatialIntelligence();
+    const interactiveObjects = [];
+
+    // VR Button setup
+    const vrButton = document.getElementById('vrButton');
+    vrButton.addEventListener('click', () => {
+        if (navigator.xr) {
+            navigator.xr.requestSession('immersive-vr').then((session) => {
+                renderer.xr.setSession(session);
+                vrButton.style.display = 'none';
+                document.getElementById('info').style.display = 'none';
+            }).catch(err => {
+                console.log('VR not available:', err);
+                alert('VR not available. Make sure you\'re using a VR-capable browser on Quest Pro.');
+            });
+        } else {
+            alert('WebXR not supported in this browser');
+        }
+    });
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(50, 50, 50);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    scene.add(directionalLight);
+
+    // Ground (visual only - collision handled by tensor physics)
+    const groundGeometry = new THREE.PlaneGeometry(100, 100);
+    const groundMaterial = new THREE.MeshLambertMaterial({ 
+        color: 0x4a5d23,
+        transparent: true,
+        opacity: 0.8
+    });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Sky
+    const skyGeometry = new THREE.SphereGeometry(500, 32, 16);
+    const skyMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x87CEEB,
+        side: THREE.BackSide 
+    });
+    const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+    scene.add(sky);
+
+    // Create adaptive geometric structures using tensor-stored templates
+    function createAdaptiveStructure(x, y, z, templateType) {
+        const template = new GeometricTemplate(templateType);
+        
+        let geometry, material;
+        
+        switch(templateType) {
+            case 'morphic_spire':
+                geometry = new THREE.ConeGeometry(2, 8, 8);
+                material = new THREE.MeshPhongMaterial({ 
+                    color: 0x4A90E2,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                break;
+                
+            case 'neural_node':
+                geometry = new THREE.OctahedronGeometry(1.5);
+                material = new THREE.MeshPhongMaterial({ 
+                    color: 0xFF6B6B,
+                    wireframe: Math.random() > 0.5,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                break;
+                
+            case 'spatial_anchor':
+                geometry = new THREE.BoxGeometry(3, 3, 3);
+                material = new THREE.MeshLambertMaterial({ 
+                    color: 0x50C878,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                break;
+                
+            default:
+                geometry = new THREE.SphereGeometry(1);
+                material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        }
+        
+        const structure = new THREE.Mesh(geometry, material);
+        structure.position.set(x, y, z);
+        structure.castShadow = true;
+        
+        const spatialId = `struct_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        structure.userData = {
+            type: 'adaptive_structure',
+            templateType: templateType,
+            geometricTemplate: template,
+            morphology: spatialIntelligence.classifyMorphology(structure),
+            confidence: Math.random() * 0.4 + 0.6,
+            spatialId: spatialId,
+            originalY: y,
+            tensorPhysics: template.tensorPhysics
+        };
+        
+        // Register with tensor-native physics system
+        tensorPhysics.registerObject(spatialId, template, structure);
+        
+        scene.add(structure);
+        interactiveObjects.push(structure);
+        
+        // Add to patch quilt system
+        patchQuilt.addPatch(
+            spatialId,
+            structure.geometry,
+            structure.userData.confidence
+        );
+        
+        return structure;
+    }
+
+    // Create floating platforms using tensor-stored kinematic data
+    function createPlatform(x, y, z, size = 8) {
+        const platformGeometry = new THREE.CylinderGeometry(size, size, 1);
+        const platformMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x9370DB,
+            transparent: true,
+            opacity: 0.7
+        });
+        const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+        platform.position.set(x, y, z);
+        platform.castShadow = true;
+        platform.receiveShadow = true;
+        
+        const spatialId = `platform_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        platform.userData = { 
+            type: 'platform',
+            originalY: y,
+            floatSpeed: Math.random() * 0.01 + 0.005,
+            isKinematic: true,
+            spatialId: spatialId
+        };
+        
+        // Create tensor-based kinematic template for platform
+        const platformTemplate = new GeometricTemplate('kinematic_platform');
+        
+        // Register with tensor physics as kinematic object
+        tensorPhysics.registerObject(spatialId, platformTemplate, platform);
+        
+        scene.add(platform);
+        interactiveObjects.push(platform);
+        
+        return platform;
+    }
+
+    // Enhanced neural-inspired particle connections
+    function createNeuralConnections() {
+        const connectionMaterial = new THREE.LineBasicMaterial({ 
+            color: 0x00FFFF,
+            transparent: true,
+            opacity: 0.3
+        });
+        
+        const adaptiveStructures = interactiveObjects.filter(obj => 
+            obj.userData.type === 'adaptive_structure'
+        );
+        
+        for (let i = 0; i < adaptiveStructures.length - 1; i++) {
+            for (let j = i + 1; j < adaptiveStructures.length; j++) {
+                const struct1 = adaptiveStructures[i];
+                const struct2 = adaptiveStructures[j];
+                const distance = struct1.position.distanceTo(struct2.position);
+                
+                if (distance < 25) {
+                    const geometry = new THREE.BufferGeometry().setFromPoints([
+                        struct1.position,
+                        struct2.position
+                    ]);
+                    
+                    const connection = new THREE.Line(geometry, connectionMaterial);
+                    connection.userData = {
+                        type: 'neural_connection',
+                        strength: Math.random(),
+                        source: struct1.userData.spatialId,
+                        target: struct2.userData.spatialId
+                    };
+                    
+                    scene.add(connection);
+                    interactiveObjects.push(connection);
+                }
+            }
+        }
+    }
+
+    // Create particle system
+    function createParticles() {
+        const particleCount = 100;
+        const particles = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 100;
+            positions[i * 3 + 1] = Math.random() * 50;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+
+            const color = new THREE.Color();
+            color.setHSL(Math.random(), 1, 0.5);
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+        }
+
+        particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const particleMaterial = new THREE.PointsMaterial({
+            size: 0.5,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.6
+        });
+
+        const particleSystem = new THREE.Points(particles, particleMaterial);
+        scene.add(particleSystem);
+        return particleSystem;
+    }
+
+    // Build the MorphNet-inspired world
+    const structureTypes = ['morphic_spire', 'neural_node', 'spatial_anchor'];
+    
+    // Primary ring of adaptive structures
+    for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const radius = 15;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const structureType = structureTypes[i % structureTypes.length];
+        createAdaptiveStructure(x, 10, z, structureType);
+    }
+    
+    // Secondary ring with spatial intelligence nodes
+    for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2;
+        const radius = 25;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        createAdaptiveStructure(x, 15, z, 'neural_node');
+    }
+    
+    // Central morphology hub
+    createAdaptiveStructure(0, 20, 0, 'morphic_spire');
+    
+    // Create floating platforms
+    createPlatform(-20, 8, -20, 6);
+    createPlatform(25, 12, 15, 8);
+    createPlatform(-15, 16, 30, 5);
+    createPlatform(0, 25, 0, 10);
+
+    // Create particle system
+    const particleSystem = createParticles();
+
+    // Create neural connections
+    setTimeout(() => {
+        createNeuralConnections();
+    }, 100);
+
+    // Camera setup
+    camera.position.set(0, 5, 10);
+
+    // Movement controls
+    const keys = {};
+    const moveSpeed = 0.2;
+
+    document.addEventListener('keydown', (event) => {
+        keys[event.key.toLowerCase()] = true;
+    });
+
+    document.addEventListener('keyup', (event) => {
+        keys[event.key.toLowerCase()] = false;
+    });
+
+    // Mouse controls
+    let isMouseDown = false;
+    let mouseX = 0, mouseY = 0;
+
+    document.addEventListener('mousedown', (event) => {
+        isMouseDown = true;
+    });
+
+    document.addEventListener('mouseup', () => {
+        isMouseDown = false;
+    });
+
+    document.addEventListener('mousemove', (event) => {
+        if (isMouseDown) {
+            const deltaX = event.clientX - mouseX;
+            const deltaY = event.clientY - mouseY;
+            
+            camera.rotation.y -= deltaX * 0.005;
+            camera.rotation.x -= deltaY * 0.005;
+            camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+        }
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+    });
+
+    // VR Controllers setup
+    const controller1 = renderer.xr.getController(0);
+    const controller2 = renderer.xr.getController(1);
+    scene.add(controller1);
+    scene.add(controller2);
+
+    // Raycaster for interactions
+    const raycaster = new THREE.Raycaster();
+    const tempMatrix = new THREE.Matrix4();
+
+    // Add visual rays to controllers
+    const rayGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, -10)
+    ]);
+    const rayMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+
+    const ray1 = new THREE.Line(rayGeometry, rayMaterial);
+    const ray2 = new THREE.Line(rayGeometry, rayMaterial);
+    controller1.add(ray1);
+    controller2.add(ray2);
+
+    // Controller interactions with tensor-stored physics data
+    function handleControllerInteraction(controller) {
+        tempMatrix.identity().extractRotation(controller.matrixWorld);
+        raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+        raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+
+        const intersects = raycaster.intersectObjects(interactiveObjects);
+        if (intersects.length > 0) {
+            const object = intersects[0].object;
+            
+            if (object.userData.type === 'adaptive_structure') {
+                const template = object.userData.geometricTemplate;
+                const tensorPhysicsData = template.tensorPhysics;
+                
+                if (object.userData.templateType === 'neural_node') {
+                    // Activate neural pulsing
+                    object.material.emissive.setHex(0x0066FF);
+                    object.scale.set(1.5, 1.5, 1.5);
+                    
+                    // Apply impulse based on tensor-stored mass
+                    const impulseForce = new THREE.Vector3(0, 15, 0);
+                    tensorPhysics.applyImpulse(object.userData.spatialId, impulseForce);
+                    
+                    console.log('Neural node activated - Mass:', tensorPhysicsData.mass);
+                    
+                } else if (object.userData.templateType === 'morphic_spire') {
+                    // Morphological response using moment of inertia tensor
+                    object.material.color.setHSL(Math.random(), 1, 0.7);
+                    
+                    // Apply torque based on moment of inertia
+                    const torqueStrength = 20.0 / tensorPhysicsData.momentOfInertia.Iyy;
+                    const randomForce = new THREE.Vector3(
+                        (Math.random() - 0.5) * torqueStrength,
+                        10,
+                        (Math.random() - 0.5) * torqueStrength
+                    );
+                    tensorPhysics.applyImpulse(object.userData.spatialId, randomForce);
+                    
+                } else if (object.userData.templateType === 'spatial_anchor') {
+                    // Anchor stability test using structural stiffness
+                    object.material.opacity = 1;
+                    
+                    const stabilityForce = new THREE.Vector3(0, -30 * tensorPhysicsData.structuralStiffness, 0);
+                    tensorPhysics.applyImpulse(object.userData.spatialId, stabilityForce);
+                }
+                
+                // Add high-confidence patch
+                patchQuilt.addPatch(
+                    `interaction_${Date.now()}`,
+                    object.geometry,
+                    template.confidence
+                );
+                
+            } else if (object.userData.type === 'neural_connection') {
+                // Strengthen neural connection
+                object.material.opacity = 1;
+                object.material.color.setHex(0x00FFFF);
+                object.userData.strength = Math.min(object.userData.strength + 0.1, 1);
+            }
+        }
+    }
+
+    controller1.addEventListener('selectstart', () => handleControllerInteraction(controller1));
+    controller2.addEventListener('selectstart', () => handleControllerInteraction(controller2));
+
+    // Animation loop with tensor-native physics
+    function animate() {
+        renderer.setAnimationLoop(animate);
+
+        // Update tensor physics (no separate physics engine step needed)
+        tensorPhysics.update(1/60);
+
+        // Sync visual objects with tensor-stored physics states
+        interactiveObjects.forEach(obj => {
+            if (obj.userData.spatialId) {
+                const tensorState = tensorPhysics.getState(obj.userData.spatialId);
+                if (tensorState) {
+                    // Update visual position from tensor data
+                    obj.position.copy(tensorState.position);
+                    
+                    // Handle kinematic objects (platforms) with tensor-stored float behavior
+                    if (obj.userData.isKinematic) {
+                        const time = Date.now() * 0.001;
+                        const newY = obj.userData.originalY + Math.sin(time * obj.userData.floatSpeed * 10) * 2;
+                        const newPos = new THREE.Vector3(
+                            obj.position.x + Math.sin(time * 0.3) * 0.02,
+                            newY,
+                            obj.position.z
+                        );
+                        tensorPhysics.setKinematicPosition(obj.userData.spatialId, newPos);
+                    }
+                }
+            }
+        });
+
+        // Desktop movement
+        if (!renderer.xr.isPresenting) {
+            if (keys['w']) camera.position.z -= moveSpeed;
+            if (keys['s']) camera.position.z += moveSpeed;
+            if (keys['a']) camera.position.x -= moveSpeed;
+            if (keys['d']) camera.position.x += moveSpeed;
+            if (keys[' ']) camera.position.y += moveSpeed;
+            if (keys['shift']) camera.position.y -= moveSpeed;
+        }
+
+        // Animate objects with MorphNet spatial intelligence using tensor data
+        const time = Date.now() * 0.001;
+
+        interactiveObjects.forEach(obj => {
+            if (obj.userData.type === 'adaptive_structure') {
+                const template = obj.userData.geometricTemplate;
+                const tensorState = tensorPhysics.getState(obj.userData.spatialId);
+                
+                if (obj.userData.templateType === 'morphic_spire') {
+                    if (tensorState) {
+                        // Add rotational motion based on moment of inertia tensor
+                        const angularVel = 1.0 / template.tensorPhysics.momentOfInertia.Iyy;
+                        obj.rotation.y += angularVel * 0.01;
+                        
+                        // Spatial intelligence monitoring using tensor-stored velocity
+                        const velocity = tensorState.velocity;
+                        const predictions = spatialIntelligence.processRealTimeUpdate(
+                            obj.userData.spatialId,
+                            obj.position,
+                            velocity
+                        );
+                        
+                        // React to predictions using structural stiffness from tensor
+                        if (predictions.length > 0) {
+                            const stiffness = template.tensorPhysics.structuralStiffness;
+                            obj.material.emissive.setRGB(0.4 * stiffness, 0, 0);
+                        } else {
+                            obj.material.emissive.lerp(new THREE.Color(0x000000), 0.1);
+                        }
+                    }
+                    
+                } else if (obj.userData.templateType === 'neural_node') {
+                    // Neural pulsing behavior based on keypoint confidence from tensor
+                    const avgConfidence = template.keypoints.reduce((sum, kp) => sum + kp.confidence, 0) / template.keypoints.length;
+                    const pulse = Math.sin(time * 3 + obj.position.x) * 0.5 + 0.5;
+                    const baseScale = 1.0;
+                    obj.scale.setScalar(baseScale + pulse * 0.2 * avgConfidence);
+                    obj.material.opacity = 0.7 + pulse * 0.3;
+                    
+                } else if (obj.userData.templateType === 'spatial_anchor') {
+                    // Confidence visualization using tensor-stored structural stiffness
+                    const stiffness = template.tensorPhysics.structuralStiffness;
+                    obj.material.color.setHSL(stiffness * 0.3, 1, 0.5);
+                }
+                
+                // Reset interaction effects
+                obj.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+                
+            } else if (obj.userData.type === 'neural_connection') {
+                // Animate neural connections
+                const strength = obj.userData.strength;
+                obj.material.opacity = 0.1 + Math.sin(time * 2 + strength * 10) * 0.3;
+            }
+        });
+        
+        // Process patch quilt refinements using tensor-stored geometry
+        patchQuilt.processRefinements();
+
+        // Animate particles
+        const positions = particleSystem.geometry.attributes.position.array;
+        for (let i = 0; i < positions.length; i += 3) {
+            positions[i + 1] += 0.05;
+            if (positions[i + 1] > 50) {
+                positions[i + 1] = 0;
+            }
+        }
+        particleSystem.geometry.attributes.position.needsUpdate = true;
+
+        renderer.render(scene, camera);
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Start the experience
+    animate();
+</script>
+```
+
+</body>
+</html>
