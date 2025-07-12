@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Swarm Canvas</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Swarm Canvas</h1>
+  <div id="log"></div>
+  <script>
+    var socket = io();
+    socket.on('identity_update', function(data){
+      document.getElementById('log').innerText = JSON.stringify(data);
+    });
+  </script>
+</body>
+</html>

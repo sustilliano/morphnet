@@ -1,0 +1,6 @@
+flask
+flask-socketio
+numpy
+pandas
+umap-learn
+plotly
