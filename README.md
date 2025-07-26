@@ -213,6 +213,9 @@ cargo run --example mmx_demo
 
 # Simple GUI
 cargo run --example gui
+
+# Cosmic correlation demo
+python examples/cosmic_correlation_example.py
 ```
 
 ## 📚 Documentation
