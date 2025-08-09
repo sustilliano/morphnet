@@ -1,26 +1,28 @@
 //! MorphNet-GTL: Geometric Template Learning and Spatial Intelligence Framework
-//! 
+//!
 //! A next-generation deep learning system for structural understanding of morphology
 //! and spatial pre-awareness, combining neural classification, geometric template
 //! inference, and patch-based mesh refinement.
 
+pub mod analysis;
 pub mod mmx;
 pub mod morphnet;
 pub mod patch_quilt;
-pub mod analysis;
+#[cfg(feature = "thingino")]
+pub mod quilt;
 pub mod spatial;
 
 // Re-export main types for convenience
+pub use analysis::{EmbeddingMethod, MorphNetAnalyzer, PhylogeneticTree};
 pub use mmx::{
-    MMXFile, MMXError, ChunkType, TensorData, MMXBuilder, MMXMode,
-    GeometricParameters, GeometricTemplateData, ExtendedBodyPlan,
+    ChunkType, ExtendedBodyPlan, GeometricParameters, GeometricTemplateData, MMXBuilder, MMXError,
+    MMXFile, MMXMode, TensorData,
 };
 pub use morphnet::{
-    MorphNet, MorphNetBuilder, GeometricTemplate, BodyPlan, TemplateFactory,
-    ClassificationResult, Keypoint, Connection, MorphNetConfig
+    BodyPlan, ClassificationResult, Connection, GeometricTemplate, Keypoint, MorphNet,
+    MorphNetBuilder, MorphNetConfig, TemplateFactory,
 };
-pub use patch_quilt::{PatchQuilt, Patch, RefinementConfig};
-pub use analysis::{MorphNetAnalyzer, EmbeddingMethod, PhylogeneticTree};
+pub use patch_quilt::{Patch, PatchQuilt, RefinementConfig};
 pub use spatial::{SpatialAwareness, SpatialConfig, SpatialEvent};
 
 /// Core error types for the framework
@@ -31,16 +33,16 @@ pub enum MorphNetError {
 
     #[error("MorphNet error: {0}")]
     MorphNet(#[from] morphnet::MorphNetError),
-    
+
     #[error("Model error: {0}")]
     Model(String),
-    
+
     #[error("Data processing error: {0}")]
     DataProcessing(String),
-    
+
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    
+
     #[error("Serialization error: {0}")]
     Serialization(#[from] bincode::Error),
 }
@@ -53,14 +55,12 @@ pub const MAGIC_BYTES: &[u8; 4] = b"MMX\x00";
 
 /// Re-export commonly used types
 pub mod prelude {
-    pub use crate::{
-        MMXFile, MMXBuilder, MMXMode,
-        MorphNet, MorphNetBuilder, PatchQuilt, MorphNetAnalyzer,
-        SpatialAwareness, Result, MorphNetError, BodyPlan,
-        GeometricTemplate, TemplateFactory, SpatialConfig,
-        GeometricParameters, GeometricTemplateData, ExtendedBodyPlan,
-    };
     pub use crate::morphnet::{train, train_logistic};
+    pub use crate::{
+        BodyPlan, ExtendedBodyPlan, GeometricParameters, GeometricTemplate, GeometricTemplateData,
+        MMXBuilder, MMXFile, MMXMode, MorphNet, MorphNetAnalyzer, MorphNetBuilder, MorphNetError,
+        PatchQuilt, Result, SpatialAwareness, SpatialConfig, TemplateFactory,
+    };
+    pub use nalgebra::{Matrix3, Matrix4, Point3, Vector3};
     pub use ndarray::{Array, Array1, Array2, Array3, ArrayD};
-    pub use nalgebra::{Point3, Vector3, Matrix3, Matrix4};
 }
