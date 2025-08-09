@@ -7,6 +7,10 @@ description = "Geometric Template Learning and Spatial Intelligence Framework"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/sustilliano/morphnet"
 
+[features]
+default = []
+thingino = ["dep:opencv", "dep:serde_yaml"]
+
 [dependencies]
 # Core ML and tensor operations
 ndarray = "0.15"
@@ -48,6 +52,8 @@ uuid = { version = "1.0", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.0", features = ["derive"] }
 eframe = "0.31"
+opencv = { version = "0.92", optional = true }
+serde_yaml = { version = "0.9", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
