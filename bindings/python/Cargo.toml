@@ -1,0 +1,15 @@
+[package]
+name = "morphnet_py"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "morphnet"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module"] }
+
+# Optional: if/when you want to call into the core crate, uncomment and adjust:
+# morphnet = { path = "../..", version = "*" }

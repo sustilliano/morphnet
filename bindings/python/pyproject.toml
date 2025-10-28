@@ -1,0 +1,23 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "morphnet"
+version = "0.1.0"
+description = "MorphNet guided patcher (ViPE post-stage ready)"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{name="Your Name"}]
+license = { text = "MIT OR Apache-2.0" }
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Rust",
+]
+
+[tool.maturin]
+# Build from this sub-crate
+bindings = "pyo3"
+module-name = "morphnet"
