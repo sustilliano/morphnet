@@ -1,0 +1,10 @@
+/target
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.whl
+/.venv
+/.maturin
+/dist
+.DS_Store

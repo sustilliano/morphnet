@@ -370,3 +370,14 @@ The theoretical connection between visual understanding and AGI appears increasi
 
 The path forward likely demands hybrid architectures combining the strengths of different learning paradigms, better theoretical frameworks bridging cognitive science and AI research, and evaluation methodologies that meaningfully assess progress toward human-level visual intelligence. Success in this endeavor will not only advance computer vision but may prove essential for the broader goal of developing artificial general intelligence systems capable of flexible reasoning and understanding across diverse domains and contexts.
 
+
+## Python bindings & ViPE post-stage
+
+Dev install:
+```bash
+pip install maturin
+cd bindings/python && maturin develop --release
+
+Run after vipe infer ...:
+
+python integrations/vipe_post/morphnet.py --vipe_results ./vipe_results --out ./vipe_results/morphnet
